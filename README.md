@@ -1,89 +1,115 @@
-## Laboratory work IV
+## Laboratory work VI
+
+
+## Homework
 
 ```sh
-lera@Lerra:~/lab031$ git clone https://github.com/Lerra227/lab03
-Cloning into 'lab03'...
-remote: Enumerating objects: 216, done.
-remote: Counting objects: 100% (216/216), done.
-remote: Compressing objects: 100% (99/99), done.
-remote: Total 216 (delta 111), reused 201 (delta 105), pack-reused 0
-Receiving objects: 100% (216/216), 91.49 KiB | 296.00 KiB/s, done.
-Resolving deltas: 100% (111/111), done.
-lera@Lerra:~/lab04$ git remote remove origin
-lera@Lerra:~/lab04$ git remote add origin https://github.com/Lerra227/lab04
-lera@Lerra:~/lab04$ mkdir .github
-lera@Lerra:~/lab04$ cd .github
-lera@Lerra:~/lab04/.github$ mkdir workflows
-lera@Lerra:~/lab04/.github/workflows$ cat > CI.yml
+lera@Lerra:~$ mkdir lab06
+lera@Lerra:~$ cd lab06
+lera@Lerra:~/lab06$ git clone https://github.com/Lerra227/lab04
+Cloning into 'lab04'...
+remote: Enumerating objects: 242, done.
+remote: Counting objects: 100% (242/242), done.
+remote: Compressing objects: 100% (120/120), done.
+remote: Total 242 (delta 121), reused 213 (delta 108), pack-reused 0
+Receiving objects: 100% (242/242), 97.63 KiB | 438.00 KiB/s, done.
+Resolving deltas: 100% (121/121), done.
+lera@Lerra:~/lab06/lab04$ git remote remove origin
+lera@Lerra:~/lab06/lab04$ git remote add origin https://github.com/Lerra227/lab06
+```
+```sh
+lera@Lerra:~/lab06/lab04$ nano CPackConfig.cmake
+```
+```sh
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_CONTACT donotwriteme@bmstuisbetterthanhse.com)
+set(CPACK_PACKAGE_VERSION_MAJOR \${PRINT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR \${PRINT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH \${PRINT_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION_TWEAK \${PRINT_VERSION_TWEAK})
+set(CPACK_PACKAGE_VERSION \${PRINT_VERSION})
+
+set(CPACK_RESOURCE_FILE_LICENSE \${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
+set(CPACK_RESOURCE_FILE_README \${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+set(CPACK_RPM_PACKAGE_NAME "solver_lab")
+set(CPACK_RPM_PACKAGE_LICENSE "MIT")
+set(CPACK_RPM_PACKAGE_GROUP "solver")
+set(CPACK_RPM_PACKAGE_VERSION CPACK_PACKAGE_VERSION)
+set(CPACK_DEBIAN_PACKAGE_NAME "libsolvert-lab")
+set(CPACK_DEBIAN_PACKAGE_PREDEPENDS "cmake >= 3.0")
+set(CPACK_DEBIAN_PACKAGE_VERSION CPACK_PACKAGE_VERSION)
+include(CPack)
+```
+```sh
+lera@Lerra:~/lab06/lab04$ cd .github/workflows
+lera@Lerra:~/lab06/lab04/.github/workflows$ nano CI.yml
+```
+
+```sh
 name: CMake
 
 on:
  push:
-  branches: [main]
+  branches: [master]
+  tags: -"v*1.*"
  pull_request:
-  branches: [main]
+  branches: [master]
 
-jobs:
- build_Linux:
+env:
 
-  runs-on: ubuntu-latest
+  BUILD_TYPE: Release
+jobs: 
+  build:
 
-  steps:
-  - uses: actions/checkout@v3
+    runs-on: ubuntu-latest
 
-  - name: Configure Solver
-    run: cmake ${{github.workspace}}/solver_application/ -B ${{github.workspace}}/solver_application/build
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build
+      run: cmake -H. -B_build -DCPACK_GENERATOR="TGZ" && cmake --build _build --target package &&
+             cd _build && cpack -G "DEB" &&
+             cpack -G "RPM" &&
+             mkdir ../artifacts &&
+             mv *.tar.gz ../artifacts/ &&
+             mv *.deb ../artifacts/ &&
+             mv *.rpm ../artifacts/
 
-  - name: Build Solver
-    run: cmake --build ${{github.workspace}}/solver_application/build
-
-  - name: Configure HelloWorld
-    run: cmake ${{github.workspace}}/hello_world_application/ -B ${{github.workspace}}/hello_world_application/build
-
-  - name: Build HelloWorld
-    run: cmake --build ${{github.workspace}}/hello_world_application/build
-
- build_Windows:
-
-  runs-on: windows-latest
-
-  steps:
-  - uses: actions/checkout@v3
-
-  - name: Configure Solver
-    run: cmake ${{github.workspace}}/solver_application/ -B ${{github.workspace}}/solver_application/build
-
-  - name: Build Solver
-    run: cmake --build ${{github.workspace}}/solver_application/build
-
-  - name: Configure HelloWorld
-    run: cmake ${{github.workspace}}/hello_world_application/ -B ${{github.workspace}}/hello_world_application/build
-
-  - name: Build HelloWorld
-    run: cmake --build ${{github.workspace}}/hello_world_application/build^Z
-[1]+  Stopped                 cat > CI.yml
-lera@Lerra:~/lab04/.github/workflows$ nano  CI.yml
-lera@Lerra:~/lab04/.github/workflows$ cd ..
-lera@Lerra:~/lab04/.github$ cd ..
-lera@Lerra:~/lab04$ git add .github
-lera@Lerra:~/lab04$ git commit -m "added CI.yml"
-[main 22b184b] added CI.yml
- 1 file changed, 46 insertions(+)
- create mode 100644 .github/workflows/CI.yml
- lera@Lerra:~/lab04$ git push origin main
+    - name: Publish
+      uses: actions/upload-artifact@v2
+      with:
+        name: artifact
+        path: artifacts/
+```
+```sh 
+lera@Lerra:~/lab06/lab04/.github/workflows$ cd ..
+lera@Lerra:~/lab06/lab04/.github$ cd ..
+lera@Lerra:~/lab06/lab04$ git add -A
+lera@Lerra:~/lab06/lab04$ git commit -m "first06"
+[main cf250a4] first06
+ 2 files changed, 52 insertions(+), 46 deletions(-)
+ rewrite .github/workflows/CI.yml (95%)
+ create mode 100644 CPackConfig.cmake
+lera@Lerra:~/lab06/lab04$ git push origin main
 Username for 'https://github.com': Lerra227
 Password for 'https://Lerra227@github.com':
-Enumerating objects: 213, done.
-Counting objects: 100% (213/213), done.
+Enumerating objects: 10, done.
+Counting objects: 100% (10/10), done.
 Delta compression using up to 20 threads
-Compressing objects: 100% (93/93), done.
-Writing objects: 100% (213/213), 89.38 KiB | 44.69 MiB/s, done.
-Total 213 (delta 108), reused 205 (delta 106), pack-reused 0
-remote: Resolving deltas: 100% (108/108), done.
-To https://github.com/Lerra227/lab04
- * [new branch]      main -> main
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (6/6), 1.02 KiB | 1.02 MiB/s, done.
+Total 6 (delta 1), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To https://github.com/Lerra227/lab06
+   fb40f4c..cf250a4  main -> main
+lera@Lerra:~/lab06/lab04$  git tag v0.1
+lera@Lerra:~/lab06/lab04$ git push origin main v0.1
+Username for 'https://github.com': Lerra227
+Password for 'https://Lerra227@github.com':
+Total 0 (delta 0), reused 0 (delta 0), pack-reused 0
+To https://github.com/Lerra227/lab06
+ * [new tag]         v0.1 -> v0.1   
 ```
-
 ```
 Copyright (c) 2015-2021 The ISC Authors
 ```
