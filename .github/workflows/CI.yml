@@ -2,32 +2,34 @@ name: CMake
 
 on:
  push:
-   tags:
-     - v**
+  branches: [main]
+  tags: -"v**"
+ pull_request:
+  branches: [main]
 
+env:
+
+  BUILD_TYPE: Release
 jobs: 
-
-  build_packages_Linux:
+  build:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+    
+    - name: Build
+      run: cmake -H. -B_build -DCPACK_GENERATOR="TGZ" && cmake --build _build --target package &&
+             cd _build && cpack -G "DEB" &&
+             cpack -G "RPM" &&
+             mkdir ../artifacts &&
+             mv *.tar.gz ../artifacts/ &&
+             mv *.deb ../artifacts/ &&
+             mv *.rpm ../artifacts/
 
-    - name: Configure Solver
-      run: cmake ${{github.workspace}} -B ${{github.workspace}}/build -D PRINT_VERSION=${GITHUB_REF_NAME#v}
-
-    - name: Build Solver
-      run: cmake --build ${{github.workspace}}/build
-
-    - name: Build package
-      run: cmake --build ${{github.workspace}}/build --target package
-
-    - name: Build source package
-      run: cmake --build ${{github.workspace}}/build --target package_source
-
-    - name: Make a release
-      uses: ncipollo/release-action@v1.10.0
+    - name: Publish
+      uses: actions/upload-artifact@v2
       with:
-        artifacts: "build/*.deb,build/*.rpm,build/*.tar.gz,build/*.zip"
-        token: ${{ secrets.GITHUB_TOKEN }}
+        name: artifact
+        path: artifacts/
+
