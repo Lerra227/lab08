@@ -22,23 +22,53 @@ lera@Lerra:~/lab06/lab04$ nano CPackConfig.cmake
 ```
 ```sh
 include(InstallRequiredSystemLibraries)
-set(CPACK_PACKAGE_CONTACT donotwriteme@bmstuisbetterthanhse.com)
-set(CPACK_PACKAGE_VERSION_MAJOR \${PRINT_VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR \${PRINT_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH \${PRINT_VERSION_PATCH})
-set(CPACK_PACKAGE_VERSION_TWEAK \${PRINT_VERSION_TWEAK})
-set(CPACK_PACKAGE_VERSION \${PRINT_VERSION})
 
-set(CPACK_RESOURCE_FILE_LICENSE \${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
+set(CPACK_PACKAGE_CONTACT donotdisturb@yandex.ru)
+set(CPACK_PACKAGE_VERSION_MAJOR ${PRINT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PRINT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PRINT_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION_TWEAK ${PRINT_VERSION_TWEAK})
+set(CPACK_PACKAGE_VERSION ${PRINT_VERSION})
+
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "static C++ library for printing")
+
 set(CPACK_RESOURCE_FILE_README \${CMAKE_CURRENT_SOURCE_DIR}/README.md)
-set(CPACK_RPM_PACKAGE_NAME "solver_lab")
+
+set(CPACK_RPM_PACKAGE_NAME "solver")
 set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-set(CPACK_RPM_PACKAGE_GROUP "solver")
+set(CPACK_RPM_PACKAGE_GROUP "print-solver")
 set(CPACK_RPM_PACKAGE_VERSION CPACK_PACKAGE_VERSION)
-set(CPACK_DEBIAN_PACKAGE_NAME "libsolvert-lab")
+
+set(CPACK_DEBIAN_PACKAGE_NAME "solver")
 set(CPACK_DEBIAN_PACKAGE_PREDEPENDS "cmake >= 3.0")
 set(CPACK_DEBIAN_PACKAGE_VERSION CPACK_PACKAGE_VERSION)
+
 include(CPack)
+```
+```sh
+lera@Lerra:~/lab06/lab04$ nano CMakeLists.txt
+```
+```sh
+cmake_minimum_required(VERSION 3.4)
+project(lab06)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include_directories("formatter_lib")
+include_directories("formatter_ex_lib")
+include_directories("solver_lib")
+
+add_library(formatter_lib STATIC "formatter_lib/formatter.cpp")
+add_library(formatter_ex_lib STATIC "formatter_ex_lib/formatter_ex.cpp")
+add_library(solver_lib STATIC "solver_lib/solver.cpp")
+
+add_executable(solver "solver_application/equation.cpp")
+
+target_link_libraries(solver solver_lib formatter_ex_lib formatter_lib)
+
+include(CPackConfig.cmake)
+
 ```
 ```sh
 lera@Lerra:~/lab06/lab04$ cd .github/workflows
@@ -49,66 +79,62 @@ lera@Lerra:~/lab06/lab04/.github/workflows$ nano CI.yml
 name: CMake
 
 on:
- push:
-  branches: [master]
-  tags: -"v*1.*"
- pull_request:
-  branches: [master]
-
+  push:
+    branches: [main]
+    tags: -"v*0.*"
+  pull_request:
+    branches: [main]
+    
 env:
-
   BUILD_TYPE: Release
-jobs: 
-  build:
 
+jobs:
+  build_Linux:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Build
-      run: cmake -H. -B_build -DCPACK_GENERATOR="TGZ" && cmake --build _build --target package &&
-             cd _build && cpack -G "DEB" &&
+      - uses: actions/checkout@v3
+
+      - name: Configure Solver
+        run: cmake -H. -B_build -DCPACK_GENERATOR="TGZ"
+
+      - name: Build Solver
+        run: cmake --build _build --target package
+
+      - name: Make Solver Package
+        run: cd _build && cpack -G "DEB" &&
              cpack -G "RPM" &&
              mkdir ../artifacts &&
              mv *.tar.gz ../artifacts/ &&
              mv *.deb ../artifacts/ &&
              mv *.rpm ../artifacts/
-
-    - name: Publish
-      uses: actions/upload-artifact@v2
-      with:
-        name: artifact
-        path: artifacts/
+      - name: Publish
+        uses: actions/upload-artifact@v2
+        with:
+          name: DebRpm
+          path: artifacts/
 ```
 ```sh 
 lera@Lerra:~/lab06/lab04/.github/workflows$ cd ..
 lera@Lerra:~/lab06/lab04/.github$ cd ..
 lera@Lerra:~/lab06/lab04$ git add -A
-lera@Lerra:~/lab06/lab04$ git commit -m "first06"
-[main cf250a4] first06
- 2 files changed, 52 insertions(+), 46 deletions(-)
- rewrite .github/workflows/CI.yml (95%)
- create mode 100644 CPackConfig.cmake
-lera@Lerra:~/lab06/lab04$ git push origin main
+lera@Lerra:~/lab06/lab04$ git commit -m "ohgod"
+[main ee03bef] ohgod
+ 3 files changed, 39 insertions(+), 31 deletions(-)
+lera@Lerra:~/lab06/lab04$ git tag v0.5
+lera@Lerra:~/lab06/lab04$ git push origin main --tags
 Username for 'https://github.com': Lerra227
 Password for 'https://Lerra227@github.com':
-Enumerating objects: 10, done.
-Counting objects: 100% (10/10), done.
+Enumerating objects: 13, done.
+Counting objects: 100% (13/13), done.
 Delta compression using up to 20 threads
-Compressing objects: 100% (4/4), done.
-Writing objects: 100% (6/6), 1.02 KiB | 1.02 MiB/s, done.
-Total 6 (delta 1), reused 0 (delta 0), pack-reused 0
-remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+Compressing objects: 100% (5/5), done.
+Writing objects: 100% (7/7), 956 bytes | 478.00 KiB/s, done.
+Total 7 (delta 4), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (4/4), completed with 4 local objects.
 To https://github.com/Lerra227/lab06
-   fb40f4c..cf250a4  main -> main
-lera@Lerra:~/lab06/lab04$  git tag v0.1
-lera@Lerra:~/lab06/lab04$ git push origin main v0.1
-Username for 'https://github.com': Lerra227
-Password for 'https://Lerra227@github.com':
-Total 0 (delta 0), reused 0 (delta 0), pack-reused 0
-To https://github.com/Lerra227/lab06
- * [new tag]         v0.1 -> v0.1   
+   bf154ea..ee03bef  main -> main
+ * [new tag]         v0.5 -> v0.5
 ```
 ```
 Copyright (c) 2015-2021 The ISC Authors
